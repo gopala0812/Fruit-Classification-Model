@@ -3,7 +3,8 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=10000
+    PORT=10000 \
+    KERAS_BACKEND=tensorflow
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \

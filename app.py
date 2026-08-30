@@ -5,9 +5,9 @@ import base64
 import numpy as np
 from PIL import Image
 
-# Set default backend for Keras 3 (supports torch / tensorflow / jax)
+# Set TensorFlow as the backend for Keras 3
 if "KERAS_BACKEND" not in os.environ:
-    os.environ["KERAS_BACKEND"] = "torch"
+    os.environ["KERAS_BACKEND"] = "tensorflow"
 
 import keras
 from flask import Flask, request, jsonify, render_template, send_from_directory
