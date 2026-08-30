@@ -169,10 +169,10 @@ body {
   z-index: 1;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 1rem 1.5rem 2rem;
+  padding: 2rem 1.5rem 2.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 2rem;
 }
 
 /* Header */
@@ -181,31 +181,17 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.45rem;
-  width: 100%;
-}
-
-.header-top-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  margin-bottom: -0.25rem;
-}
-
-.header-placeholder {
-  width: 100px;
+  gap: 0.85rem;
 }
 
 .app-title {
   font-family: var(--font-heading);
-  font-size: clamp(1.8rem, 4.5vw, 2.8rem);
+  font-size: clamp(2rem, 5vw, 3.2rem);
   font-weight: 800;
   letter-spacing: -0.02em;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-top: -0.4rem;
 }
 
 .fruit-icon-bounce {
@@ -221,6 +207,7 @@ body {
 .gradient-text {
   background: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f97316 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -1078,6 +1065,7 @@ body {
 .author-name {
   background: linear-gradient(135deg, #a855f7, #ec4899);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 700;
   font-size: 1rem;
@@ -1106,7 +1094,7 @@ body {
 /* Author Pop-up Floating Tooltip Card */
 .author-popup {
   position: absolute;
-  bottom: calc(100% + 12px);
+  bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%) translateY(8px);
   opacity: 0;
@@ -1123,7 +1111,19 @@ body {
   flex-direction: column;
   gap: 0.5rem;
   min-width: 260px;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Invisible hover bridge to prevent premature closing */
+.author-popup::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: -20px;
+  right: -20px;
+  height: 20px;
+  background: transparent;
+  pointer-events: auto;
 }
 
 [data-theme="light"] .author-popup {
@@ -1149,7 +1149,8 @@ body {
 }
 
 .author-wrapper:hover .author-popup,
-.author-wrapper:focus-within .author-popup {
+.author-wrapper:focus-within .author-popup,
+.author-wrapper.active .author-popup {
   opacity: 1;
   pointer-events: auto;
   transform: translateX(-50%) translateY(0);

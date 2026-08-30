@@ -1,0 +1,12 @@
+{
+  "venvPath": "C:/Users/Public",
+  "venv": "venv_torch",
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "extraPaths": [
+        "C:/Users/Public/venv_torch/Lib/site-packages"
+      ]
+    }
+  ]
+}

@@ -70,6 +70,34 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Author Pop-up Click Toggle Support
+  const authorWrapper = document.getElementById('author-wrapper');
+  if (authorWrapper) {
+    authorWrapper.addEventListener('click', (e) => {
+      if (e.target.closest('.popup-btn')) return; // Allow clicking links
+      authorWrapper.classList.toggle('active');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!authorWrapper.contains(e.target)) {
+        authorWrapper.classList.remove('active');
+      }
+    });
+  }
+
+  // Mail button feedback & copy fallback
+  const authorEmailBtn = document.getElementById('author-email-btn');
+  if (authorEmailBtn) {
+    authorEmailBtn.addEventListener('click', () => {
+      const email = 'gopalakrish0826@gmail.com';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(email).then(() => {
+          showToast(`Email copied: ${email}`, 'success');
+        }).catch(() => {});
+      }
+    });
+  }
+
   // Toast Notification Helper
   function showToast(message, type = 'error') {
     const toast = document.createElement('div');
