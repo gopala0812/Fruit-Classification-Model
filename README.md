@@ -141,7 +141,7 @@ Then visit `http://localhost:10000` in your web browser.
 4. Configure the service:
    - **Environment**: `Python`
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120 app:app`
+   - **Start Command**: `gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 4 --worker-class gthread --timeout 120 --access-logfile - --error-logfile - app:app`
 5. Click **Create Web Service**. Your app will be live with an HTTPS URL in minutes!
 
 ---

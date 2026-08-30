@@ -2,8 +2,14 @@ import os
 import io
 import json
 import base64
+import threading
 import numpy as np
 from PIL import Image
+
+# Suppress TensorFlow GPU searches & verbose logs on CPU-only hosting
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 
 # Set TensorFlow as the backend for Keras 3
 if "KERAS_BACKEND" not in os.environ:
@@ -23,11 +29,40 @@ CLASS_NAMES_PATH = os.path.join(os.path.dirname(__file__), "class_names.json")
 with open(CLASS_NAMES_PATH, "r") as f:
     CLASS_NAMES = json.load(f)
 
-# Load trained Keras model
+# Path to trained Keras model
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "fruit_classifier_mobilenetv2.keras")
-print(f"Loading trained model from {MODEL_PATH}...")
-model = keras.models.load_model(MODEL_PATH)
-print("Model loaded successfully!")
+
+# Global model instance and thread lock for lazy thread-safe loading
+_model = None
+_model_lock = threading.Lock()
+
+
+def get_model():
+    """
+    Thread-safe lazy loader for the trained Keras model.
+    Ensures the model is loaded only once and avoids blocking web server startup.
+    """
+    global _model
+    if _model is None:
+        with _model_lock:
+            if _model is None:
+                print(f"Loading trained model from {MODEL_PATH}...")
+                _model = keras.models.load_model(MODEL_PATH)
+                print("Model loaded successfully!")
+    return _model
+
+
+def _start_background_model_preload():
+    """
+    Starts a non-blocking background thread to warm up the model
+    after the web server starts listening for HTTP traffic.
+    """
+    thread = threading.Thread(target=get_model, daemon=True)
+    thread.start()
+
+
+# Trigger non-blocking model preloading in background
+_start_background_model_preload()
 
 # Fruit metadata: nutritional facts, emojis, fun facts, and color accents
 FRUIT_METADATA = {
@@ -79,7 +114,7 @@ FRUIT_METADATA = {
 }
 
 
-def preprocess_image_bytes(image_bytes):
+def preprocess_image_bytes(image_bytes, model_obj=None):
     """
     Validates, converts, and prepares image bytes for model prediction.
     Input size: 160x160 RGB.
@@ -91,10 +126,14 @@ def preprocess_image_bytes(image_bytes):
         img_array = np.array(img, dtype=np.float32)
 
         # Check if the model has an internal Rescaling layer
-        # If the model layers already contain Rescaling, pass [0, 255] float array
-        has_rescaling_layer = any(
-            "Rescaling" in layer.__class__.__name__ for layer in model.layers
-        )
+        target_model = model_obj or _model
+        if target_model and hasattr(target_model, "layers"):
+            has_rescaling_layer = any(
+                "Rescaling" in layer.__class__.__name__ for layer in target_model.layers
+            )
+        else:
+            has_rescaling_layer = True
+
         if not has_rescaling_layer:
             img_array = (img_array / 127.5) - 1.0
 
@@ -112,13 +151,18 @@ def index():
 
 @app.route("/health", methods=["GET"])
 def health():
+    """
+    Lightweight health check endpoint returning HTTP 200 immediately
+    without requiring model inference or blocking on startup.
+    """
     return jsonify({
         "status": "healthy",
         "model": "MobileNetV2 Fruit Classifier",
         "classes": CLASS_NAMES,
         "test_accuracy": "91%",
-        "input_resolution": "160x160"
-    })
+        "input_resolution": "160x160",
+        "model_loaded": _model is not None
+    }), 200
 
 
 @app.route("/predict", methods=["POST"])
@@ -147,13 +191,18 @@ def predict():
     if not image_bytes:
         return jsonify({"error": "No image provided. Please upload an image file."}), 400
 
+    # Ensure model is initialized (thread-safe singleton)
+    current_model = get_model()
+    if current_model is None:
+        return jsonify({"error": "Model could not be loaded. Please check server logs."}), 500
+
     # Validate and preprocess image
-    img_batch, err = preprocess_image_bytes(image_bytes)
+    img_batch, err = preprocess_image_bytes(image_bytes, model_obj=current_model)
     if err:
         return jsonify({"error": "Invalid image file. Please provide a valid JPEG, PNG, or WEBP image."}), 400
 
     # Run inference
-    predictions = model.predict(img_batch, verbose=0)[0]
+    predictions = current_model.predict(img_batch, verbose=0)[0]
     predicted_idx = int(np.argmax(predictions))
     predicted_class = CLASS_NAMES[predicted_idx]
     confidence_score = float(predictions[predicted_idx])
