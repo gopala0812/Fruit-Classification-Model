@@ -117,10 +117,10 @@ You can build and run the application locally inside a container:
 docker build -t fruit-classifier .
 
 # 2. Run the Docker container
-docker run -p 5000:5000 fruit-classifier
+docker run -p 10000:10000 fruit-classifier
 ```
 
-Then visit `http://localhost:5000` in your web browser.
+Then visit `http://localhost:10000` in your web browser.
 
 ---
 

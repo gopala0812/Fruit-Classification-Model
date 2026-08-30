@@ -117,10 +117,10 @@ If you have Docker Desktop installed:
 docker build -t fruit-classifier .
 
 # 2. Run the container
-docker run -p 5000:5000 fruit-classifier
+docker run -p 10000:10000 fruit-classifier
 ```
 
-Then open: **[http://localhost:5000](http://localhost:5000)**
+Then open: **[http://localhost:10000](http://localhost:10000)**
 
 ---
 
