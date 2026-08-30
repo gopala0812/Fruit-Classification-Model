@@ -1,0 +1,28 @@
+# Python & Virtual Environments
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Dataset files & Archives (Do not commit large datasets)
+Fruits Classification/
+Fruits Classification.zip
+*.zip
+*.tar.gz
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local

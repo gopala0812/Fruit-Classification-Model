@@ -1,0 +1,10 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+Fruits Classification/
+Fruits Classification.zip
+*.zip
+.git/
+.gitignore
+.env

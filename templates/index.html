@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AI Fruit Classifier powered by deep learning and MobileNetV2 transfer learning with 91% test accuracy. Classify Apple, Banana, Grape, Mango, and Strawberry images instantly.">
+  <title>🍎 Fruit Classifier AI — MobileNetV2 Deep Learning</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%22100%22%20%22100%22><text y=%22.9em%22 font-size=%2290%22>🍎</text></svg>">
+</head>
+<body>
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <div class="app-container">
+    <!-- Header with Top Right Theme Toggle -->
+    <header class="app-header">
+      <div class="header-top-row">
+        <div class="header-placeholder"></div>
+        <button type="button" class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle Theme" title="Toggle Light / Dark Theme">
+          <span class="theme-icon" id="theme-icon">☀️</span>
+          <span class="theme-label" id="theme-label">Light Mode</span>
+        </button>
+      </div>
+
+      <h1 class="app-title">
+        <span class="fruit-icon-bounce">🍎</span> Fruit Classifier <span class="gradient-text">AI</span>
+      </h1>
+      <p class="app-subtitle">
+        Instant deep learning visual recognition for 5 fruit classes
+      </p>
+      
+      <!-- Supported Fruits Tags -->
+      <div class="fruit-chips-row">
+        <span class="fruit-chip apple"><span class="chip-emoji">🍎</span> Apple</span>
+        <span class="fruit-chip banana"><span class="chip-emoji">🍌</span> Banana</span>
+        <span class="fruit-chip grape"><span class="chip-emoji">🍇</span> Grape</span>
+        <span class="fruit-chip mango"><span class="chip-emoji">🥭</span> Mango</span>
+        <span class="fruit-chip strawberry"><span class="chip-emoji">🍓</span> Strawberry</span>
+      </div>
+    </header>
+
+    <!-- Main Classifier Workspace -->
+    <main class="classifier-grid">
+      <!-- Input Card -->
+      <section class="card input-card">
+        <div class="card-header">
+          <h2><span class="step-num">1</span> Upload Fruit Image</h2>
+          <span class="card-hint">PNG, JPG, WEBP, or Camera</span>
+        </div>
+
+        <!-- Drag and Drop Dropzone -->
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp,image/jpg" class="file-input-hidden" aria-label="Upload fruit image">
+          
+          <div class="dropzone-empty-state" id="dropzone-empty">
+            <div class="upload-icon-container">
+              <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <h3>Drag & drop fruit image here</h3>
+            <p>or click to browse from device</p>
+            <div class="upload-actions">
+              <button type="button" class="btn btn-primary" id="btn-browse">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                Choose Image
+              </button>
+              <button type="button" class="btn btn-secondary" id="btn-camera">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                Use Camera
+              </button>
+            </div>
+          </div>
+
+          <!-- Image Preview Area -->
+          <div class="preview-state hidden" id="preview-state">
+            <div class="preview-frame">
+              <img id="image-preview" src="" alt="Selected fruit preview" />
+              <button type="button" class="btn-remove-image" id="btn-remove-image" title="Remove image">✕</button>
+              <div class="preview-badge" id="preview-dimensions">160x160 Resized</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Classify Button -->
+        <button type="button" class="btn btn-classify" id="btn-classify" disabled>
+          <span class="btn-text">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            Classify Fruit
+          </span>
+          <span class="spinner hidden" id="classify-spinner"></span>
+        </button>
+
+        <!-- Quick Sample Selector -->
+        <div class="samples-section">
+          <div class="samples-header">
+            <span>Or try a quick test sample:</span>
+          </div>
+          <div class="samples-grid">
+            <button type="button" class="sample-btn" data-fruit="Apple" data-src="/static/samples/apple.jpg">
+              <span class="sample-emoji">🍎</span> Apple
+            </button>
+            <button type="button" class="sample-btn" data-fruit="Banana" data-src="/static/samples/banana.jpg">
+              <span class="sample-emoji">🍌</span> Banana
+            </button>
+            <button type="button" class="sample-btn" data-fruit="Grape" data-src="/static/samples/grape.jpg">
+              <span class="sample-emoji">🍇</span> Grape
+            </button>
+            <button type="button" class="sample-btn" data-fruit="Mango" data-src="/static/samples/mango.jpg">
+              <span class="sample-emoji">🥭</span> Mango
+            </button>
+            <button type="button" class="sample-btn" data-fruit="Strawberry" data-src="/static/samples/strawberry.jpg">
+              <span class="sample-emoji">🍓</span> Strawberry
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Results Card -->
+      <section class="card results-card" id="results-card">
+        <div class="card-header">
+          <h2><span class="step-num">2</span> Prediction Results</h2>
+          <span class="status-indicator" id="status-indicator">Awaiting Input</span>
+        </div>
+
+        <!-- Empty Results State -->
+        <div class="results-empty" id="results-empty">
+          <div class="empty-animation-ring">
+            <span class="empty-center-emoji">🔍</span>
+          </div>
+          <h3>No Prediction Yet</h3>
+          <p>Upload a fruit image or pick one from the quick test samples to see model predictions and confidence scores.</p>
+        </div>
+
+        <!-- Active Results Display -->
+        <div class="results-active hidden" id="results-active">
+          <!-- Main Prediction Highlight Banner -->
+          <div class="prediction-highlight" id="prediction-banner">
+            <div class="pred-emoji-circle" id="pred-emoji-circle">
+              <span class="pred-emoji" id="pred-emoji">🍇</span>
+            </div>
+            <div class="pred-info">
+              <span class="pred-tag">Top Prediction</span>
+              <h3 class="pred-fruit-name" id="pred-fruit-name">Grape</h3>
+              <div class="confidence-badge" id="confidence-badge">
+                Confidence: <strong id="pred-confidence">96.40%</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- All Class Probabilities Bar Chart -->
+          <div class="probabilities-panel">
+            <h4>Prediction Confidence Breakdown</h4>
+            <div class="prob-bars-list" id="prob-bars-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Fruit Nutrition & Fun Facts Card -->
+          <div class="fruit-facts-card" id="fruit-facts-card">
+            <div class="facts-header">
+              <span class="facts-icon">💡</span>
+              <h4>Fruit Facts & Insights</h4>
+            </div>
+            <div class="facts-body">
+              <div class="fact-row">
+                <span class="fact-label">Calories:</span>
+                <span class="fact-value" id="fact-calories">69 kcal / 100g</span>
+              </div>
+              <div class="fact-row">
+                <span class="fact-label">Key Nutrients:</span>
+                <span class="fact-value" id="fact-nutrients">Resveratrol, Vitamin K, Antioxidants</span>
+              </div>
+              <div class="fact-row">
+                <span class="fact-label">Health Benefit:</span>
+                <span class="fact-value" id="fact-health">Supports cardiovascular wellness and cellular health.</span>
+              </div>
+              <div class="fact-fun">
+                <span class="fun-tag">Did you know?</span>
+                <p id="fact-fun-text">There are over 8,000 known grape varieties worldwide!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Camera Capture Modal -->
+    <div class="modal-backdrop hidden" id="camera-modal">
+      <div class="modal-window">
+        <div class="modal-header">
+          <h3>📷 Capture Fruit from Camera</h3>
+          <button type="button" class="btn-modal-close" id="btn-close-camera">✕</button>
+        </div>
+        <div class="camera-stream-container">
+          <video id="camera-video" autoplay playsinline></video>
+          <canvas id="camera-canvas" class="hidden"></canvas>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-camera">Cancel</button>
+          <button type="button" class="btn btn-primary" id="btn-snap-photo">📸 Snap Photo</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-content">
+        <p>Fruit Classification Deep Learning Model • <strong>MobileNetV2 (160×160 RGB)</strong> • 91% Test Accuracy</p>
+        <div class="footer-author">
+          <p>
+            Made by 
+            <span class="author-wrapper" id="author-wrapper" tabindex="0">
+              <strong class="author-name">Gopala Krishna H K</strong>
+              <span class="author-msg-icon" title="Connect with Gopala Krishna">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.2L4 17.2V4h16v12z"/></svg>
+              </span>
+              <!-- Social Links Pop-up Card -->
+              <span class="author-popup" id="author-popup">
+                <span class="popup-heading">Connect with Gopala Krishna</span>
+                <span class="popup-actions">
+                  <!-- LINE 236: PASTE YOUR LINKEDIN PROFILE URL IN href="" BELOW -->
+                  <a href="" target="_blank" rel="noopener noreferrer" class="popup-btn linkedin" title="LinkedIn Profile">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
+                    <span>LinkedIn</span>
+                  </a>
+                  <!-- LINE 241: PASTE YOUR GITHUB PROFILE URL IN href="" BELOW -->
+                  <a href="" target="_blank" rel="noopener noreferrer" class="popup-btn github" title="GitHub Profile">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg>
+                    <span>GitHub</span>
+                  </a>
+                  <!-- LINE 246: PASTE YOUR EMAIL ADDRESS IN href="mailto:..." BELOW -->
+                  <a href="mailto:" class="popup-btn mail" title="Send Email">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                    <span>Mail</span>
+                  </a>
+                </span>
+              </span>
+            </span>
+            &copy;
+          </p>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
