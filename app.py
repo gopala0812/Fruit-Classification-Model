@@ -133,14 +133,16 @@ def predict():
         image_bytes = file.read()
 
     # Handle base64 encoded data payload (e.g. from camera/drag-and-drop)
-    elif request.is_json and "image_data" in request.json:
-        raw_data = request.json["image_data"]
-        if "," in raw_data:
-            raw_data = raw_data.split(",", 1)[1]
-        try:
-            image_bytes = base64.b64decode(raw_data)
-        except Exception:
-            return jsonify({"error": "Malformed base64 image data received."}), 400
+    elif request.is_json:
+        json_data = request.get_json(silent=True)
+        if isinstance(json_data, dict) and "image_data" in json_data:
+            raw_data = str(json_data["image_data"])
+            if "," in raw_data:
+                raw_data = raw_data.split(",", 1)[1]
+            try:
+                image_bytes = base64.b64decode(raw_data)
+            except Exception:
+                return jsonify({"error": "Malformed base64 image data received."}), 400
 
     if not image_bytes:
         return jsonify({"error": "No image provided. Please upload an image file."}), 400
@@ -190,7 +192,8 @@ def predict():
 
 @app.route("/static/samples/<path:filename>")
 def serve_sample(filename):
-    return send_from_directory(os.path.join(app.static_folder, "samples"), filename)
+    static_dir = app.static_folder or "static"
+    return send_from_directory(os.path.join(static_dir, "samples"), filename)
 
 
 if __name__ == "__main__":
